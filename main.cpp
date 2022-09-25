@@ -1,106 +1,64 @@
 #include "crow_all.h"
 
-class ExampleLogHandler : public crow::ILogHandler
-{
-public:
-    void log(std::string /*message*/, crow::LogLevel /*level*/) override
-    {
-        //            cerr << "ExampleLogHandler -> " << message;
-    }
-};
-
 int main()
 {
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/")
-      .name("hello")([] {
-          return "Server Chalyo!!!! MA BHAGWAN HOOOOO";
-      });
+    //--------------LOGIN ROUTE--------------------------
 
-    CROW_ROUTE(app, "/about")
-    ([]() {
-        return "About Crow example.";
-    });
-
-    // simple json response
-    CROW_ROUTE(app, "/json")
-    ([] {
-        crow::json::wvalue x({{"message", "Hello, World!"}});
-        x["message2"] = "Hello, World.. Again!";
+    CROW_ROUTE(app, "/login").methods("POST"_method)
+    ([](const crow::request& req){
+        std::string userName, password;
+        auto requestBody = crow::json::load(req.body);
+        userName = requestBody["username"].s();
+        password = requestBody["password"].s();
+        // TODO: Do attendance
+        // TODO: Return JWT
+        crow::json::wvalue x({ {"username", userName} });
+        x["password"] = password;
+        x["role"] = "admin";
+        x["token"] = "123abc";
         return x;
     });
 
+    //------------------EMPLOYEE ACTIVITY ROUTES-------------------
 
-    // json list response
-    CROW_ROUTE(app, "/json_list")
-    ([] {
-        crow::json::wvalue x(crow::json::wvalue::list({1, 2, 3}));
+    //Product Details
+
+    CROW_ROUTE(app, "/product/<int>")
+     ([](int productID) {
+        // TODO: Return Product Details
+        crow::json::wvalue x({ {"productID", productID} });
+        x["key2"] = "value2";
         return x;
-    });
+     }); 
 
-    CROW_ROUTE(app, "/hello/<int>")
-    ([](int count) {
-        if (count > 100)
-            return crow::response(400);
-        std::ostringstream os;
-        os << count << " bottles of beer!";
-        return crow::response(os.str());
-    });
+    // Order Details
+    
+    CROW_ROUTE(app, "/orders/<int>").methods("GET"_method)
+     ([](int orderID) {
+        // TODO: GET order details
+        // TODO: ADD Orders (post)
+        // TODO:  REMOVE Orders (delete)
+        crow::json::wvalue x({ {"orderID", orderID} });
+        x["key2"] = "value2";
+        x["httpMethod"] = "get";
+        return x;
+     });
 
-    // example which uses only response as a paramter without
-    // request being a parameter.
-    CROW_ROUTE(app, "/add/<int>/<int>")
-    ([](crow::response& res, int a, int b) {
-        std::ostringstream os;
-        os << a + b;
-        res.write(os.str());
-        res.end();
-    });
+    CROW_ROUTE(app, "/orders/<int>").methods("POST"_method)
+        ([](int orderID) {
+        // TODO: GET order details
+        // TODO: ADD Orders (post)
+        // TODO:  REMOVE Orders (delete)
+        crow::json::wvalue x({ {"orderID", orderID} });
+        x["httpMethod"] = "post";
+        return x;
+            });
 
-    // Compile error with message "Handler type is mismatched with URL paramters"
-    //CROW_ROUTE(app,"/another/<int>")
-    //([](int a, int b){
-    //return crow::response(500);
-    //});
-
-    // more json example
-    CROW_ROUTE(app, "/add_json")
-    ([](const crow::request& req) {
-        auto x = crow::json::load(req.body);
-        if (!x)
-            return crow::response(400);
-        int sum = x["a"].i() + x["b"].i();
-        std::ostringstream os;
-        os << sum;
-        return crow::response{os.str()};
-    });
-
-    CROW_ROUTE(app, "/params")
-    ([](const crow::request& req) {
-        std::ostringstream os;
-        os << "Params: " << req.url_params << "\n\n";
-        os << "The key 'foo' was " << (req.url_params.get("foo") == nullptr ? "not " : "") << "found.\n";
-        if (req.url_params.get("pew") != nullptr)
-        {
-            double countD = crow::utility::lexical_cast<double>(req.url_params.get("pew"));
-            os << "The value of 'pew' is " << countD << '\n';
-        }
-        auto count = req.url_params.get_list("count");
-        os << "The key 'count' contains " << count.size() << " value(s).\n";
-        for (const auto& countVal : count)
-        {
-            os << " - " << countVal << '\n';
-        }
-        return crow::response{os.str()};
-    });
-
-    // ignore all log
-    crow::logger::setLogLevel(crow::LogLevel::Debug);
-    //crow::logger::setHandler(std::make_shared<ExampleLogHandler>());
 
     app.port(18080)
-      .server_name("CrowCpp")
+      .server_name("VittiWebServer")
       .multithreaded()
       .run();
 }
