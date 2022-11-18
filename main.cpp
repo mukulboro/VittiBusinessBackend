@@ -1,9 +1,30 @@
 #include "crow_all.h"
+#include "sqlite3.h"
+#define PORT 6969
 
 int main()
 {
+    int isDbError = 0;
+    CROW_LOG_INFO << "Server is running on port "<<PORT;
+    // Opening Database 
+    sqlite3* db;
+
+    isDbError = sqlite3_open("vittiDB.db", &db);
+
+    if (isDbError) {
+        CROW_LOG_WARNING << "DB Open Error: " << sqlite3_errmsg(db);
+    }else{
+        CROW_LOG_INFO << "Database opened successfully";
+    }
+
     crow::SimpleApp app;
 
+    CROW_ROUTE(app, "/health").methods("GET"_method)
+        ([]() {
+        CROW_LOG_INFO << "Server health checked.";
+        return "true";
+    });
+   
     //--------------LOGIN ROUTE--------------------------
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
@@ -189,7 +210,7 @@ int main()
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string token = requestBody["token"].s();
-        // {date, loginTime, logoutTime}
+        // {date, loginTime}
         response["token"] = token;
         response["employeeID"] = employeeID;
         response["timeFrame"] = timeFrame;
@@ -277,7 +298,7 @@ int main()
             });
 
     
-    app.port(18080)
+    app.port(PORT)
       .server_name("VittiWebServer")
       .multithreaded()
       .run();
