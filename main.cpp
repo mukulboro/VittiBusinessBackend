@@ -1,5 +1,6 @@
 #include "crow_all.h"
 #include "../WebServer/WebServer/database.h"
+#include "../WebServer/WebServer/customDataTypes.h"
 #include "sqlite3.h"
 #define PORT 6969
 
@@ -32,6 +33,7 @@ int main()
         CROW_LOG_INFO << "Error initializing tables";
     }
 
+
     /*
     sql = "INSERT INTO Employee(EmployeeID, name, post, role, username,password) VALUES (0, \"admin\", \"administrator\", \"admin\", \"admin\", \"admin\");";
     isDbError = sqlite3_exec(db, sql.c_str(), serverCallback, 0, &zErrMsg);
@@ -47,16 +49,32 @@ int main()
     //--------------LOGIN ROUTE--------------------------
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
-    ([](const crow::request& req){
+    ([&](const crow::request& req){
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string userName, password;
+        bool isValidUser = false;
         userName = requestBody["username"].s();
         password = requestBody["password"].s();
+
+        LoginDetails dbData = database.login(userName, password);
+
+        if (password == dbData.password) isValidUser = true;
+
+        if (isValidUser) {
+            response["isValidUser"] = isValidUser;
+            response["userName"] = dbData.username;
+            response["employeeID"] = dbData.employeeID;
+            response["post"] = dbData.post;
+            response["role"] = dbData.role;
+            return response;
+        }
+        else {
+            response["isValidUser"] = isValidUser;
+            return response;
+        }
+       
         // TODO: Do attendance
-        response["userName"] = userName;
-        response["password"] = password;
-        return response;
     });
 
     //------------------EMPLOYEE ACTIVITY ROUTES-------------------

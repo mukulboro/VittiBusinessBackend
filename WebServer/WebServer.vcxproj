@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="..\crow_all.h" />
     <ClInclude Include="..\sqlite3.h" />
+    <ClInclude Include="customDataTypes.h" />
     <ClInclude Include="database.h" />
     <ClInclude Include="sqlite3.h" />
   </ItemGroup>
