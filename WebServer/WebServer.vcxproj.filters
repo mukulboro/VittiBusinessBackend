@@ -24,6 +24,9 @@
     <ClInclude Include="..\sqlite3.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="database.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp">

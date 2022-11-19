@@ -1,23 +1,42 @@
 #include "crow_all.h"
+#include "../WebServer/WebServer/database.h"
 #include "sqlite3.h"
 #define PORT 6969
 
+
 int main()
 {
-    int isDbError = 0;
-    CROW_LOG_INFO << "Server is running on port "<<PORT;
-    // Opening Database 
-    sqlite3* db;
 
-    isDbError = sqlite3_open("vittiDB.db", &db);
+    int isDbError = 0;
+    crow::SimpleApp app;
+    Database database("vittiDB.db");
+
+    CROW_LOG_INFO << "Server is running on port " << PORT;
+
+    // Opening Database 
+
+    isDbError = database.openDatabase();
 
     if (isDbError) {
-        CROW_LOG_WARNING << "DB Open Error: " << sqlite3_errmsg(db);
+        CROW_LOG_WARNING << "DB Open Error: ";
     }else{
         CROW_LOG_INFO << "Database opened successfully";
     }
 
-    crow::SimpleApp app;
+    // Initializing database tables
+
+    if (database.initializeTables()) {
+        CROW_LOG_INFO << "DB Tables initialized";
+    }
+    else {
+        CROW_LOG_INFO << "Error initializing tables";
+    }
+
+    /*
+    sql = "INSERT INTO Employee(EmployeeID, name, post, role, username,password) VALUES (0, \"admin\", \"administrator\", \"admin\", \"admin\", \"admin\");";
+    isDbError = sqlite3_exec(db, sql.c_str(), serverCallback, 0, &zErrMsg);
+    */
+
 
     CROW_ROUTE(app, "/health").methods("GET"_method)
         ([]() {
@@ -35,10 +54,8 @@ int main()
         userName = requestBody["username"].s();
         password = requestBody["password"].s();
         // TODO: Do attendance
-        // TODO: Return JWT
         response["userName"] = userName;
         response["password"] = password;
-        // {jwt, role}
         return response;
     });
 
@@ -50,11 +67,9 @@ int main()
      ([](const crow::request& req, int productID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // TODO: Return Product Details
         // {name, minPrice, maxPrice, price, stock}
-        response["token"] = token;
-        response["productID"] = token;
+        response["productID"] = 0;
         return response;
      }); 
 
@@ -66,9 +81,7 @@ int main()
         ([](const crow::request& req, int orderID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // {product, customerName, customerContact, orderStatus}
-        response["token"] = token;
         response["orderID"] = orderID;
         return response;
      });
@@ -79,14 +92,12 @@ int main()
         ([](const crow::request& req, int orderID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string productID = requestBody["product"].s();
         std::string customerName = requestBody["customer"].s();
         std::string customerContact = requestBody["contact"].s();
         std::string customerAddress = requestBody["address"].s();
         std::string price = requestBody["price"].s();
         // {orderID, message}
-        response["token"] = token;
         response["orderID"] = orderID;
         response["productID"] = productID;
         response["customerName"] = customerName;
@@ -102,9 +113,7 @@ int main()
         ([](const crow::request& req, int orderID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // {message}
-        response["token"] = token;
         response["orderID"] = orderID;
         return response;
    });
@@ -118,10 +127,8 @@ int main()
         ([](const crow::request& req, int inventoryID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // inventoryID is synonymous with productID
         // return whole inventory if inventoryID == 0
-        response["token"] = token;
         response["inventoryID"] = inventoryID;
         return response;
         });
@@ -132,10 +139,8 @@ int main()
         ([](const crow::request& req, int inventoryID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string quantity = requestBody["quantity"].s();
         // update inventory    
-        response["token"] = token;
         response["inventoryID"] = inventoryID;
         response["quantity"] = quantity;
         return response;
@@ -146,9 +151,7 @@ int main()
         ([](const crow::request& req, int inventoryID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // delete inventory
-        response["token"] = token;
         response["inventoryID"] = inventoryID;
         return response;
        });
@@ -159,9 +162,7 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // {code, validity, percentage}
-        response["token"] = token;
         return response;
          });
 
@@ -172,10 +173,8 @@ int main()
         ([](const crow::request& req, int timeFrame) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // timeFrame = 7 || 30 || 365 ie w, m, y
         // {TBD}
-        response["token"] = token;
         response["timeFrame"] = timeFrame;
         return response;
       });
@@ -186,9 +185,7 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // return list of agenda for the day (24h)
-        response["token"] = token;
         return response;
         });
 
@@ -197,9 +194,8 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
+        //std::string token = requestBody["token"].s();
         // {message}
-        response["token"] = token;
         return response;
             });
 
@@ -209,9 +205,7 @@ int main()
         ([](const crow::request& req, int employeeID, int timeFrame) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         // {date, loginTime}
-        response["token"] = token;
         response["employeeID"] = employeeID;
         response["timeFrame"] = timeFrame;
         return response;
@@ -223,13 +217,11 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string maxPrice = requestBody["maxPrice"].s();
         std::string minPrice = requestBody["minPrice"].s();
         std::string sellingPrice = requestBody["price"].s();
         std::string stock = requestBody["stock"].s();
         // {productID, message}
-        response["token"] = token;
         response["maxPrice"] = maxPrice;
         response["minPrice"] = minPrice;
         response["sellingPrice"] = sellingPrice;
@@ -241,13 +233,11 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string name = requestBody["name"].s();
         std::string post = requestBody["post"].s();
         std::string role = requestBody["role"].s();
         std::string salary = requestBody["salary"].s();
         // {employeeID, username, password}
-        response["token"] = token;
         response["name"] = name;
         response["post"] = post;
         response["role"] = role;
@@ -259,12 +249,10 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string code = requestBody["code"].s();
         std::string amount = requestBody["amount"].s();
         std::string validity = requestBody["validity"].s();
         // {message}
-        response["token"] = token;
         response["code"] = code;
         response["amount"] = amount;
         response["validity"] = validity;
@@ -277,10 +265,8 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string employeeID = requestBody["employeeID"].s();
         // {message}
-        response["token"] = token;
         response["employeeID"] = employeeID;
         return response;
             });
@@ -289,10 +275,8 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        std::string token = requestBody["token"].s();
         std::string code = requestBody["code"].s();
         // {message}
-        response["token"] = token;
         response["code"] = code;
         return response;
             });
@@ -302,4 +286,7 @@ int main()
       .server_name("VittiWebServer")
       .multithreaded()
       .run();
+
+    database.close();
+    return 0;
 }
