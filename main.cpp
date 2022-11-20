@@ -12,7 +12,7 @@ int main()
     crow::SimpleApp app;
     Database database("vittiDB.db");
 
-    CROW_LOG_INFO << "Server is running on port " << PORT;
+    CROW_LOG_INFO << "Server is running on port " << PORT <<":" << getDateTime();
 
     // Opening Database 
 
@@ -32,13 +32,6 @@ int main()
     else {
         CROW_LOG_INFO << "Error initializing tables";
     }
-
-
-    /*
-    sql = "INSERT INTO Employee(EmployeeID, name, post, role, username,password) VALUES (0, \"admin\", \"administrator\", \"admin\", \"admin\", \"admin\");";
-    isDbError = sqlite3_exec(db, sql.c_str(), serverCallback, 0, &zErrMsg);
-    */
-
 
     CROW_ROUTE(app, "/health").methods("GET"_method)
         ([]() {
@@ -62,6 +55,7 @@ int main()
         if (password == dbData.password) isValidUser = true;
 
         if (isValidUser) {
+            database.doAttendance(dbData.employeeID, dbData.name, getDateTime());
             response["isValidUser"] = isValidUser;
             response["userName"] = dbData.username;
             response["employeeID"] = dbData.employeeID;
@@ -73,8 +67,6 @@ int main()
             response["isValidUser"] = isValidUser;
             return response;
         }
-       
-        // TODO: Do attendance
     });
 
     //------------------EMPLOYEE ACTIVITY ROUTES-------------------

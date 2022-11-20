@@ -1,15 +1,9 @@
 #pragma once
 #include "sqlite3.h"
 #include"customDataTypes.h"
+/*----------------LOGIN VARIABLES--------------------*/
 
 LoginDetails loginData;
-int loginCounter = 0;
-
-int defaultCallback(void* data, int argc, char** argv, char** azColName) {
-    // Return successful
-    return 0;
-}
-
 int loginCallback(void* literalVoid, int noOfEntries, char** values, char** keys) {
     LoginDetails temp;
 
@@ -21,9 +15,19 @@ int loginCallback(void* literalVoid, int noOfEntries, char** values, char** keys
     temp.password = values[5];
 
     loginData = temp;
-    
+
     return 0;
 }
+
+/*----------------LOGIN VARIABLES--------------------*/
+
+
+int defaultCallback(void* data, int argc, char** argv, char** azColName) {
+    // Return successful
+    return 0;
+}
+
+
 
 class Database {
     private:
@@ -78,14 +82,10 @@ class Database {
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
 
             if (isDbError) return 0;
-
-            //sql = "CREATE TABLE IF NOT EXISTS BIGPP(employeeID int,employeeName varchar(256),dateTime DATETIME);";
-            //isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
-
-            if (isDbError) return 0;
             
             return 1;
         }
+        /*----------------LOGIN METHODS START--------------------*/
 
         LoginDetails login(std::string username, std::string password) {
 
@@ -98,6 +98,15 @@ class Database {
 
             return toReturn;
         }
+
+        void doAttendance(std::string id, std::string name, std::string date) {
+            sql = "INSERT INTO Attendance(employeeID,employeeName,dateTime) VALUES('" + id + "','" + name+"','" + date + "');";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+
+        }
+
+        /*----------------LOGIN METHODS END--------------------*/
+
 
         void close(){
             sqlite3_close(db);
