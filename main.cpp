@@ -248,6 +248,7 @@ int main()
 
     CROW_ROUTE(app, "/sales").methods("GET"_method)
         ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         int totalSales = database.getAllSales();
@@ -262,6 +263,7 @@ int main()
         // GET Agenda
     CROW_ROUTE(app, "/agenda").methods("GET"_method)
         ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::vector<crow::json::wvalue> list;
@@ -323,70 +325,75 @@ int main()
     // Addition routes
 
     CROW_ROUTE(app, "/add/inventory").methods("POST"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string maxPrice = requestBody["maxPrice"].s();
+        std::string productName = requestBody["name"].s();
         std::string minPrice = requestBody["minPrice"].s();
         std::string sellingPrice = requestBody["price"].s();
         std::string stock = requestBody["stock"].s();
-        // {productID, message}
-        response["maxPrice"] = maxPrice;
-        response["minPrice"] = minPrice;
-        response["sellingPrice"] = sellingPrice;
-        response["stock"] = stock;
+        std::string productID = std::to_string(time(0));
+        database.addInventory(productID, productName, minPrice, maxPrice, sellingPrice, stock); 
+        response["productID"] = productID;
+        response["message"] = "New Product Added";
         return response;
             });
 
     CROW_ROUTE(app, "/add/employee").methods("POST"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string name = requestBody["name"].s();
         std::string post = requestBody["post"].s();
         std::string role = requestBody["role"].s();
-        std::string salary = requestBody["salary"].s();
-        // {employeeID, username, password}
-        response["name"] = name;
-        response["post"] = post;
-        response["role"] = role;
-        response["salary"] = salary;
+        std::string username = requestBody["username"].s();
+        std::string password = requestBody["password"].s();
+        std::string empId = std::to_string(time(0));
+        database.addEmployee(empId, name, post, role, username, password);
+        response["employeeID"] = empId;
+        response["username"] = username;
+        response["password"] = password;
+        response["message"] = "New Employee Added";
         return response;
-            });
+        });
 
     CROW_ROUTE(app, "/add/discount").methods("POST"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string code = requestBody["code"].s();
         std::string amount = requestBody["amount"].s();
         std::string validity = requestBody["validity"].s();
-        // {message}
-        response["code"] = code;
-        response["amount"] = amount;
-        response["validity"] = validity;
+        database.addDiscountCode(code, amount, validity);
+        response["message"] = "Added new discount code";
         return response;
             });
 
     // Removal Routes
 
     CROW_ROUTE(app, "/remove/employee").methods("DELETE"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string employeeID = requestBody["employeeID"].s();
-        // {message}
-        response["employeeID"] = employeeID;
+        database.deleteEmployee(employeeID);
+        response["message"] = "Deleted given employee";
         return response;
             });
 
     CROW_ROUTE(app, "/remove/discount").methods("DELETE"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string code = requestBody["code"].s();
-        // {message}
-        response["code"] = code;
+        database.deleteDiscount(code);
+        response["message"] = "Deleted Given Code";
         return response;
             });
 

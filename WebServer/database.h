@@ -333,6 +333,13 @@ class Database {
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
 
         }
+
+        void addInventory(std::string productID, std::string name, std::string minPrice, 
+            std::string maxPrice, std::string price, std::string stock) {
+            sql = "INSERT INTO Product VALUES('" + productID + "','" + name + "','" + minPrice + "','" + maxPrice + "','" + price + "','" + stock + "');";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        
+        }
         /*----------------INVENTORY METHODS END--------------------*/
 
         /*----------------DISCOUNT METHODS START--------------------*/
@@ -350,10 +357,30 @@ class Database {
             discountCounter = 0;
             return temp;
         }
+
+        void deleteDiscount(std::string code ) {
+            sql = "DELETE FROM Discount WHERE code='" + code + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+
+        void addDiscountCode(std::string code, std::string amount, std::string validity) {
+            sql = "INSERT INTO Discount VALUES('"+code+"','"+amount+"','"+validity+"');";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
         /*----------------DISCOUNT METHODS END--------------------*/
 
+        /*----------------EMPLOYEE METHODS START--------------------*/
+        void deleteEmployee(std::string id) {
+            sql = "DELETE FROM Employee WHERE EmployeeID='" + id + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
 
-
+        void addEmployee(std::string id, std::string name, std::string post, std::string role, 
+            std::string username, std::string password) {
+            sql = "INSERT INTO Employee VALUES('"+id+"','"+name+"','"+post+"','"+role+"','"+username+"','"+password+"');";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+        /*----------------EMPLOYEE METHODS END--------------------*/
 
         void close(){
             sqlite3_close(db);
