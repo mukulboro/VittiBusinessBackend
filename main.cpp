@@ -12,30 +12,30 @@ int main()
     crow::SimpleApp app;
     Database database("vittiDB.db");
 
-    CROW_LOG_INFO << "Server is running on port " << PORT <<":" << getDateTime();
+    CROW_LOG_INFO << ":::Server is running on port " << PORT <<":" << getDateTime()<<":::";
 
     // Opening Database 
 
     isDbError = database.openDatabase();
 
     if (isDbError) {
-        CROW_LOG_WARNING << "DB Open Error: ";
+        CROW_LOG_WARNING << ":::DB Open Error:::";
     }else{
-        CROW_LOG_INFO << "Database opened successfully";
+        CROW_LOG_INFO << ":::Database opened successfully:::";
     }
 
     // Initializing database tables
 
     if (database.initializeTables()) {
-        CROW_LOG_INFO << "DB Tables initialized";
+        CROW_LOG_INFO << ":::DB Tables initialized:::";
     }
     else {
-        CROW_LOG_INFO << "Error initializing tables";
+        CROW_LOG_INFO << ":::Error initializing tables:::";
     }
 
     CROW_ROUTE(app, "/health").methods("GET"_method)
         ([]() {
-        CROW_LOG_INFO << "Server health checked.";
+        CROW_LOG_INFO << ":::Server health checked:::";
         return "true";
     });
    
@@ -190,7 +190,7 @@ int main()
       });
 
     // Agenda
-        // GET Agenda (Also accessible to employee jwt)
+        // GET Agenda
     CROW_ROUTE(app, "/agenda").methods("GET"_method)
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
@@ -204,22 +204,30 @@ int main()
         ([](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        //std::string token = requestBody["token"].s();
         // {message}
         return response;
             });
 
     // Attendance Route
         // GET attendance details
-    CROW_ROUTE(app, "/attendance/<int>/<int>").methods("GET"_method)
-        ([](const crow::request& req, int employeeID, int timeFrame) {
+    CROW_ROUTE(app, "/attendance/<int>").methods("GET"_method)
+        ([&](const crow::request& req, int employeeID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // {date, loginTime}
+        AttendanceDetails* listOfValues;
+        int numberOfValues;
+        listOfValues = database.getAttendance(employeeID);
+        numberOfValues = database.numberOfAttendance();
+
+        for (int i = 0; i < numberOfValues; i++) {
+            CROW_LOG_INFO << "ID:" << listOfValues[i].employeeID;
+            CROW_LOG_INFO << "Name:" << listOfValues[i].employeeName;
+            CROW_LOG_INFO << "Datetime:" << listOfValues[i].datetime;
+        }
+
         response["employeeID"] = employeeID;
-        response["timeFrame"] = timeFrame;
         return response;
-            });
+        });
 
     // Addition routes
 

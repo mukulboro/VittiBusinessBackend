@@ -29,3 +29,15 @@ typedef struct LoginStuff {
 	std::string password;
 	bool didLogin;
 } LoginDetails;
+
+typedef struct DiscountStuff {
+	std::string code;
+	int amount; //denotes percentage
+	std::string validity;
+} DiscountDetails;
+
+typedef struct AttendanceStuff {
+	std::string employeeID;
+	std::string employeeName;
+	std::string datetime;
+} AttendanceDetails;
