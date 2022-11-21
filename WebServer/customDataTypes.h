@@ -41,3 +41,21 @@ typedef struct AttendanceStuff {
 	std::string employeeName;
 	std::string datetime;
 } AttendanceDetails;
+
+typedef struct ProductStuff {
+	std::string productID;
+	std::string productName;
+	std::string minPrice;
+	std::string maxPrice;
+	std::string price;
+	std::string stock;
+} ProductDetails;
+
+typedef struct OrderStuff {
+	std::string orderID;
+	std::string productID;
+	std::string customerName;
+	std::string customerContact;
+	std::string customerAddress;
+	std::string price;
+} OrderDetails;

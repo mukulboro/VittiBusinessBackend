@@ -1,6 +1,7 @@
 #pragma once
 #include "sqlite3.h"
 #include"customDataTypes.h"
+#include <ctime>
 
 /*----------------LOGIN VARIABLES--------------------*/
 
@@ -28,7 +29,6 @@ AttendanceDetails listOfAttendance[MAX];
 int attendanceCounter = 0;
 
 int attendanceCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
-    CROW_LOG_INFO << "IN CALLBACK: " << attendanceCounter;
 
     listOfAttendance[attendanceCounter].employeeID = values[0]; // ID
     listOfAttendance[attendanceCounter].employeeName = values[1]; // Name
@@ -39,6 +39,32 @@ int attendanceCallback(void* literalVoid, int noOfColumns, char** values, char**
 }
 
 /*----------------ATTENDANCE VARIABLES--------------------*/
+
+/*----------------PRODUCT VARIABLES--------------------*/
+ProductDetails productDetail;
+int productCallback(void* literalVoid, int noOfEntries, char** values, char** keys) {
+    productDetail.productID = values[0];
+    productDetail.productName = values[1];
+    productDetail.minPrice = values[2];
+    productDetail.maxPrice = values[3];
+    productDetail.price = values[4];
+    productDetail.stock = values[5];
+    return 0;
+}
+/*----------------ORDER VARIABLES--------------------*/
+
+OrderDetails orderDetail;
+int orderCallback(void* literalVoid, int noOfEntries, char** values, char** keys) {
+    orderDetail.orderID = values[0];
+    orderDetail.productID = values[1];
+    orderDetail.customerName = values[2];
+    orderDetail.customerContact = values[3];
+    orderDetail.customerAddress = values[4];
+    orderDetail.price = values[5];
+    return 0;
+}
+/*----------------ORDER VARIABLES--------------------*/
+
 
 
 int defaultCallback(void* data, int argc, char** argv, char** azColName) {
@@ -126,8 +152,7 @@ class Database {
         }
 
         AttendanceDetails* getAttendance(int id) {
-            //sql = "SELECT * FROM ATTENDANCE WHERE employeeID='"+std::to_string(id)+"';";
-            sql = "SELECT * FROM Attendance WHERE employeeID='69'";
+            sql = "SELECT * FROM ATTENDANCE WHERE employeeID='"+std::to_string(id)+"';";
             isDbError = sqlite3_exec(db, sql.c_str(), attendanceCallback, 0, &zErrMsg);
             return listOfAttendance;
         }
@@ -141,8 +166,51 @@ class Database {
         /*----------------ATTENDANCE METHODS END--------------------*/
 
         /*----------------PRODUCT METHODS START--------------------*/
-
+        ProductDetails getProductDetail(int id) {
+            ProductDetails toReturn;
+            sql = "SELECT * FROM Product WHERE productID='" + std::to_string(id) + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), productCallback, 0, &zErrMsg);
+            toReturn = productDetail;
+            return toReturn;
+        }
         /*----------------PRODUCT METHODS END--------------------*/
+
+        /*----------------ORDER METHODS START--------------------*/
+        OrderDetails getOrderDetail (int id) {
+            OrderDetails toReturn;
+            sql = "SELECT * FROM Orders WHERE orderID='" + std::to_string(id) + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), orderCallback, 0, &zErrMsg);
+            toReturn = orderDetail;
+            return toReturn;
+        }
+
+        void addOrder(OrderDetails detail) {
+            std::string id = detail.orderID;
+            std::string product = detail.productID;
+            std::string name = detail.customerName;
+            std::string contact = detail.customerContact;
+            std::string address = detail.customerAddress;
+            std::string price = detail.price;
+
+            sql = "INSERT INTO Orders VALUES('" + id + "','" + product + "','" + name + "','" + contact + "','" + address + "','" + price + "');";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+
+        }
+
+        void deleteOrder(int id) {
+            sql = "DELETE FROM Orders WHERE orderID='" + std::to_string(id) + "';";
+            CROW_LOG_INFO << sql;
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+        /*----------------ORDER METHODS END--------------------*/
+
+        /*----------------AGENDA METHODS START--------------------*/
+        void addAgenda(std::string agenda) {
+            std::string datetime = getDateTime();
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+        /*----------------AGENDA METHODS END--------------------*/
+
 
         void close(){
             sqlite3_close(db);

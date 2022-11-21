@@ -35,6 +35,7 @@ int main()
 
     CROW_ROUTE(app, "/health").methods("GET"_method)
         ([]() {
+        // ROUTE COMPLETED
         CROW_LOG_INFO << ":::Server health checked:::";
         return "true";
     });
@@ -42,7 +43,8 @@ int main()
     //--------------LOGIN ROUTE--------------------------
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
-    ([&](const crow::request& req){
+    ([&database](const crow::request& req){
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string userName, password;
@@ -74,12 +76,17 @@ int main()
     //Product Details
 
     CROW_ROUTE(app, "/product/<int>").methods("GET"_method)
-     ([](const crow::request& req, int productID) {
+     ([&database](const crow::request& req, int productID) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // TODO: Return Product Details
-        // {name, minPrice, maxPrice, price, stock}
-        response["productID"] = 0;
+        ProductDetails detail = database.getProductDetail(productID);
+        response["productID"] = detail.productID;
+        response["productName"] = detail.productName;
+        response["minPrice"] = detail.minPrice;
+        response["maxPrice"] = detail.maxPrice;
+        response["price"] = detail.price;
+        response["stock"] = detail.stock;
         return response;
      }); 
 
@@ -88,43 +95,55 @@ int main()
 
         // GET order details
     CROW_ROUTE(app, "/orders/<int>").methods("GET"_method)
-        ([](const crow::request& req, int orderID) {
+        ([&database](const crow::request& req, int orderID) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // {product, customerName, customerContact, orderStatus}
-        response["orderID"] = orderID;
+        OrderDetails detail = database.getOrderDetail(orderID);
+
+        response["orderID"] = detail.orderID;
+        response["productID"] = detail.productID;
+        response["customerName"] = detail.customerName;
+        response["customerContact"] = detail.customerContact;
+        response["customerAddress"] = detail.customerAddress;
+        response["price"] = detail.price;
+
         return response;
      });
 
 
     //ADD Orders (post)
-    CROW_ROUTE(app, "/orders/<int>").methods("POST"_method)
-        ([](const crow::request& req, int orderID) {
+    CROW_ROUTE(app, "/orders").methods("POST"_method)
+        ([&database](const crow::request& req) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
+        OrderDetails toSend;
         std::string productID = requestBody["product"].s();
         std::string customerName = requestBody["customer"].s();
         std::string customerContact = requestBody["contact"].s();
         std::string customerAddress = requestBody["address"].s();
         std::string price = requestBody["price"].s();
-        // {orderID, message}
-        response["orderID"] = orderID;
-        response["productID"] = productID;
-        response["customerName"] = customerName;
-        response["customerContact"] = customerContact;
-        response["customerAddress"] = customerAddress;
-        response["price"] = price;
+        toSend.orderID = std::to_string(time(0));
+        toSend.productID = productID;
+        toSend.customerName = customerName;
+        toSend.customerAddress = customerAddress;
+        toSend.customerContact = customerContact;
+        toSend.price = price;
+        database.addOrder(toSend);
+        response["orderID"] = toSend.orderID;
+        response["message"] = "Added Order";
         return response;
      });
 
 
     //REMOVE Orders (delete)
     CROW_ROUTE(app, "/orders/<int>").methods("DELETE"_method)
-        ([](const crow::request& req, int orderID) {
+        ([&database](const crow::request& req, int orderID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // {message}
-        response["orderID"] = orderID;
+        database.deleteOrder(orderID);
+        response["message"] = "Order Deleted";
         return response;
    });
 
@@ -199,34 +218,45 @@ int main()
         return response;
         });
 
-    // POST agenda (only for admin)
+    // POST agenda
     CROW_ROUTE(app, "/agenda").methods("POST"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        // ROUTE COMPLETED
+
+        std::string agenda;
         auto requestBody = crow::json::load(req.body);
+        agenda = requestBody["agenda"].s();
+        database.addAgenda(agenda);
         crow::json::wvalue response({});
-        // {message}
+        response["message"] = "Added Agenda";
+
         return response;
-            });
+        });
 
     // Attendance Route
         // GET attendance details
     CROW_ROUTE(app, "/attendance/<int>").methods("GET"_method)
         ([&](const crow::request& req, int employeeID) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
-        crow::json::wvalue response({});
+        crow::json::wvalue response;
+        std::vector<crow::json::wvalue> list;
         AttendanceDetails* listOfValues;
         int numberOfValues;
         listOfValues = database.getAttendance(employeeID);
         numberOfValues = database.numberOfAttendance();
 
         for (int i = 0; i < numberOfValues; i++) {
-            CROW_LOG_INFO << "ID:" << listOfValues[i].employeeID;
-            CROW_LOG_INFO << "Name:" << listOfValues[i].employeeName;
-            CROW_LOG_INFO << "Datetime:" << listOfValues[i].datetime;
-        }
+            response["employeeID"] = listOfValues[i].employeeID;
+            response["employeeName"] = listOfValues[i].employeeName;
+            response["datetime"] = listOfValues[i].datetime;
 
-        response["employeeID"] = employeeID;
-        return response;
+            list.push_back(response);
+        }
+        
+        //TODO: RETURN LIST JSON
+        crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
+        return listResponse;
         });
 
     // Addition routes
