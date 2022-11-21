@@ -65,6 +65,19 @@ int orderCallback(void* literalVoid, int noOfEntries, char** values, char** keys
 }
 /*----------------ORDER VARIABLES--------------------*/
 
+
+OrderDetails listOfSales[MAX];
+int salesCounter = 0;
+
+int salesCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
+
+    listOfSales[salesCounter].price = values[5];
+
+    salesCounter++;
+    return 0;
+}
+
+
 /*----------------INVENTORY VARIABLES--------------------*/
 
 ProductDetails listOfProducts[MAX];
@@ -83,6 +96,34 @@ int inventoryCallback(void* literalVoid, int noOfColumns, char** values, char** 
 }
 
 /*----------------INVENTORY VARIABLES--------------------*/
+
+
+/*----------------DISCOUNT VARIABLES--------------------*/
+
+DiscountDetails listOfDiscounts[MAX];
+int discountCounter = 0;
+
+int discountCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
+    listOfDiscounts[discountCounter].code = values[0];
+    listOfDiscounts[discountCounter].amount = values[1];
+    listOfDiscounts[discountCounter].validity = values[2];
+
+    discountCounter++;
+    return 0;
+}
+/*----------------DISCOUNT VARIABLES--------------------*/
+
+/*----------------AGENDA VARIABLES--------------------*/
+AgendaDetails listOfAgenda[MAX];
+int agendaCounter = 0;
+
+int agendaCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
+    listOfAgenda[agendaCounter].agenda = values[0];
+    listOfAgenda[agendaCounter].postedDate = values[1];
+    agendaCounter++;
+    return 0;
+}
+/*----------------AGENDA VARIABLES--------------------*/
 
 
 
@@ -221,12 +262,49 @@ class Database {
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
         }
         /*----------------ORDER METHODS END--------------------*/
+        
+        /*----------------SALES METHODS START--------------------*/
+
+        int getAllSales() {
+            int amount = 0;
+            sql = "SELECT * FROM Orders";
+            isDbError = sqlite3_exec(db, sql.c_str(), salesCallback, 0, &zErrMsg);
+
+            for (int i = 0; i < salesCounter; i++) {
+                amount += std::stoi(listOfSales[i].price);
+            }
+
+            return amount;
+        }
+
+        int numberOfSales() {
+            int temp = salesCounter;
+            salesCounter = 0;
+            return temp;
+        }
+
+        /*----------------SALES METHODS END--------------------*/
+
 
         /*----------------AGENDA METHODS START--------------------*/
         void addAgenda(std::string agenda) {
             std::string datetime = getDateTime();
             sql = "INSERT INTO Agenda VALUES('"+agenda+"','"+datetime+"');";
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+
+        AgendaDetails* getAgenda() {
+            AgendaDetails* toReturn;
+            sql = "SELECT * FROM Agenda";
+            isDbError = sqlite3_exec(db, sql.c_str(), agendaCallback, 0, &zErrMsg);
+            toReturn = listOfAgenda;
+            return toReturn;
+        }
+
+        int numberOfAgenda() {
+            int temp = agendaCounter;
+            agendaCounter = 0;
+            return temp;
         }
         /*----------------AGENDA METHODS END--------------------*/
 
@@ -256,6 +334,24 @@ class Database {
 
         }
         /*----------------INVENTORY METHODS END--------------------*/
+
+        /*----------------DISCOUNT METHODS START--------------------*/
+        DiscountDetails* getDiscountCodes() {
+            DiscountDetails* toReturn;
+            sql = "SELECT * FROM Discount;";
+            isDbError = sqlite3_exec(db, sql.c_str(), discountCallback, 0, &zErrMsg);
+            toReturn = listOfDiscounts;
+            return toReturn;
+           
+        }
+
+        int numberOfDiscount() {
+            int temp = discountCounter;
+            discountCounter = 0;
+            return temp;
+        }
+        /*----------------DISCOUNT METHODS END--------------------*/
+
 
 
 

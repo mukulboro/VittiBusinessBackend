@@ -197,11 +197,11 @@ int main()
         // Using POST instead of PATCH because [REDACTED] it
     CROW_ROUTE(app, "/inventory/<int>").methods("POST"_method)
         ([&database](const crow::request& req, int inventoryID) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string quantity = requestBody["quantity"].s();
         std::string price = requestBody["price"].s();
-        // update inventory
         database.updateInventory(inventoryID, price, quantity);
         response["message"] = "Updated Product";
         return response;
@@ -219,36 +219,65 @@ int main()
        });
 
     //Discount Code
-        // GET Discount (+ removal route below)
+        // GET Discount 
     CROW_ROUTE(app, "/discount").methods("GET"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // {code, validity, percentage}
-        return response;
+        std::vector<crow::json::wvalue> list;
+        DiscountDetails* listOfValues;
+        int numberOfValues;
+        listOfValues = database.getDiscountCodes();
+        numberOfValues = database.numberOfDiscount();
+
+        for (int i = 0; i < numberOfValues; i++) {
+            response["code"] = listOfValues[i].code;
+            response["percentage"] = listOfValues[i].amount;
+            response["validity"] = listOfValues[i].validity;
+            list.push_back(response);
+        }
+
+        crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
+        return listResponse;
+        
          });
 
     // Sales Data
        // GET Sales Data
 
-    CROW_ROUTE(app, "/sales/<int>").methods("GET"_method)
-        ([](const crow::request& req, int timeFrame) {
+    CROW_ROUTE(app, "/sales").methods("GET"_method)
+        ([&database](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // timeFrame = 7 || 30 || 365 ie w, m, y
-        // {TBD}
-        response["timeFrame"] = timeFrame;
+        int totalSales = database.getAllSales();
+        int number = database.numberOfSales();
+        response["totalSales"] = totalSales;
+        response["numberOfSales"] = number;
+        response["averageSalesAmount"] = totalSales / number;
         return response;
       });
 
     // Agenda
         // GET Agenda
     CROW_ROUTE(app, "/agenda").methods("GET"_method)
-        ([](const crow::request& req) {
+        ([&database](const crow::request& req) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // return list of agenda for the day (24h)
-        return response;
+        std::vector<crow::json::wvalue> list;
+        AgendaDetails* listOfValues;
+        int numberOfValues;
+        listOfValues = database.getAgenda();
+        numberOfValues = database.numberOfAgenda();
+
+        for (int i = 0; i < numberOfValues; i++) {
+            response["agenda"] = listOfValues[i].agenda;
+            response["postedDate"] = listOfValues[i].postedDate;
+            list.push_back(response);
+        }
+
+        crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
+        return listResponse;
         });
 
     // POST agenda

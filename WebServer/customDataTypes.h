@@ -32,7 +32,7 @@ typedef struct LoginStuff {
 
 typedef struct DiscountStuff {
 	std::string code;
-	int amount; //denotes percentage
+	std::string amount; //denotes percentage
 	std::string validity;
 } DiscountDetails;
 
@@ -59,3 +59,8 @@ typedef struct OrderStuff {
 	std::string customerAddress;
 	std::string price;
 } OrderDetails;
+
+typedef struct AgendaStuff {
+	std::string agenda;
+	std::string postedDate;
+} AgendaDetails;
