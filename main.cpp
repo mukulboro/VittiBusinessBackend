@@ -140,6 +140,7 @@ int main()
     //REMOVE Orders (delete)
     CROW_ROUTE(app, "/orders/<int>").methods("DELETE"_method)
         ([&database](const crow::request& req, int orderID) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         database.deleteOrder(orderID);
@@ -153,35 +154,67 @@ int main()
     // Inventory Details
         // GET Inventory
     CROW_ROUTE(app, "/inventory/<int>").methods("GET"_method)
-        ([](const crow::request& req, int inventoryID) {
+        ([&](const crow::request& req, int inventoryID) {
+        // ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // inventoryID is synonymous with productID
-        // return whole inventory if inventoryID == 0
-        response["inventoryID"] = inventoryID;
-        return response;
+
+        if (!inventoryID) {
+            std::vector<crow::json::wvalue> list;
+            ProductDetails* listOfValues;
+            int numberOfValues;
+            listOfValues = database.getInventory();
+            numberOfValues = database.numberOfInventory();
+
+           
+            for (int i = 0; i < numberOfValues; i++) {
+                response["productID"] = listOfValues[i].productID;
+                response["productName"] = listOfValues[i].productName;
+                response["minPrice"] = listOfValues[i].minPrice;
+                response["maxPrice"] = listOfValues[i].maxPrice;
+                response["price"] = listOfValues[i].price;
+                response["stock"] = listOfValues[i].stock;
+
+                list.push_back(response);
+            }
+
+            crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
+            return listResponse;
+        }
+        else {
+            ProductDetails detail = database.getProductDetail(inventoryID);
+            response["productID"] = detail.productID;
+            response["productName"] = detail.productName;
+            response["minPrice"] = detail.minPrice;
+            response["maxPrice"] = detail.maxPrice;
+            response["price"] = detail.price;
+            response["stock"] = detail.stock;
+            return response;
+        }
         });
 
     // Update Inventory
-        // Using POST instead of PATCH because fuck it
+        // Using POST instead of PATCH because [REDACTED] it
     CROW_ROUTE(app, "/inventory/<int>").methods("POST"_method)
-        ([](const crow::request& req, int inventoryID) {
+        ([&database](const crow::request& req, int inventoryID) {
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string quantity = requestBody["quantity"].s();
-        // update inventory    
-        response["inventoryID"] = inventoryID;
-        response["quantity"] = quantity;
+        std::string price = requestBody["price"].s();
+        // update inventory
+        database.updateInventory(inventoryID, price, quantity);
+        response["message"] = "Updated Product";
         return response;
     });
 
     // DETELE Inventory
     CROW_ROUTE(app, "/inventory/<int>").methods("DELETE"_method)
-        ([](const crow::request& req, int inventoryID) {
+        ([&database](const crow::request& req, int inventoryID) {
+        //ROUTE COMPLETED
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
-        // delete inventory
-        response["inventoryID"] = inventoryID;
+        database.deleteInventory(inventoryID);
+        response["message"] = "Deleted product.";
         return response;
        });
 
@@ -254,7 +287,6 @@ int main()
             list.push_back(response);
         }
         
-        //TODO: RETURN LIST JSON
         crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
         return listResponse;
         });

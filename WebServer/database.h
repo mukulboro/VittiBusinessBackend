@@ -65,6 +65,25 @@ int orderCallback(void* literalVoid, int noOfEntries, char** values, char** keys
 }
 /*----------------ORDER VARIABLES--------------------*/
 
+/*----------------INVENTORY VARIABLES--------------------*/
+
+ProductDetails listOfProducts[MAX];
+int productCounter = 0;
+
+int inventoryCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
+    listOfProducts[productCounter].productID = values[0];
+    listOfProducts[productCounter].productName = values[1];
+    listOfProducts[productCounter].minPrice = values[2];
+    listOfProducts[productCounter].maxPrice = values[3];
+    listOfProducts[productCounter].price = values[4];
+    listOfProducts[productCounter].stock = values[5];
+
+    productCounter++;
+    return 0;
+}
+
+/*----------------INVENTORY VARIABLES--------------------*/
+
 
 
 int defaultCallback(void* data, int argc, char** argv, char** azColName) {
@@ -199,7 +218,6 @@ class Database {
 
         void deleteOrder(int id) {
             sql = "DELETE FROM Orders WHERE orderID='" + std::to_string(id) + "';";
-            CROW_LOG_INFO << sql;
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
         }
         /*----------------ORDER METHODS END--------------------*/
@@ -207,9 +225,38 @@ class Database {
         /*----------------AGENDA METHODS START--------------------*/
         void addAgenda(std::string agenda) {
             std::string datetime = getDateTime();
+            sql = "INSERT INTO Agenda VALUES('"+agenda+"','"+datetime+"');";
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
         }
         /*----------------AGENDA METHODS END--------------------*/
+
+        /*----------------INVENTORY METHODS START--------------------*/
+        ProductDetails* getInventory() {
+            ProductDetails* toReturn;
+            sql = "SELECT * FROM Product;";
+            isDbError = sqlite3_exec(db, sql.c_str(), inventoryCallback, 0, &zErrMsg);
+            toReturn = listOfProducts;
+            return toReturn;
+        }
+
+        int numberOfInventory() {
+            int temp = productCounter;
+            productCounter = 0;
+            return temp;
+        }
+
+        void deleteInventory(int id) {
+            sql = "DELETE FROM Product WHERE productID='" + std::to_string(id) + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+        }
+
+        void updateInventory(int ID, std::string price, std::string stock) {
+            sql = "UPDATE Product SET price='" + price + "', stock='" + stock + "' WHERE productID='" + std::to_string(ID) + "';";
+            isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
+
+        }
+        /*----------------INVENTORY METHODS END--------------------*/
+
 
 
         void close(){
