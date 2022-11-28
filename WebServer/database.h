@@ -61,6 +61,7 @@ int orderCallback(void* literalVoid, int noOfEntries, char** values, char** keys
     orderDetail.customerContact = values[3];
     orderDetail.customerAddress = values[4];
     orderDetail.price = values[5];
+    orderDetail.paymentMode = values[6];
     return 0;
 }
 /*----------------ORDER VARIABLES--------------------*/
@@ -96,6 +97,27 @@ int inventoryCallback(void* literalVoid, int noOfColumns, char** values, char** 
 }
 
 /*----------------INVENTORY VARIABLES--------------------*/
+
+/*----------------ALL ORDERS VARIABLES--------------------*/
+
+OrderDetails listOfOrders[MAX];
+int orderCounter = 0;
+
+int allOrdersCallback(void* literalVoid, int noOfColumns, char** values, char** keys) {
+    listOfOrders[orderCounter].orderID = values[0];
+    listOfOrders[orderCounter].productID = values[1];
+    listOfOrders[orderCounter].customerName = values[2];
+    listOfOrders[orderCounter].customerContact = values[3];
+    listOfOrders[orderCounter].customerAddress = values[4];
+    listOfOrders[orderCounter].price = values[5];
+    listOfOrders[orderCounter].paymentMode = values[6];
+
+    orderCounter++;
+    return 0;
+}
+
+/*----------------ALL ORDERS VARIABLES--------------------*/
+
 
 
 /*----------------DISCOUNT VARIABLES--------------------*/
@@ -143,13 +165,13 @@ class Database {
         std::string dbName;
 
     public:
-        Database(std::string name){
-            name = dbName;
+        Database(std::string dName){
+            dbName = dName;
         }
 
 
         int openDatabase() {
-            isDbError = sqlite3_open("vittiDB.db", &db);
+            isDbError = sqlite3_open(dbName.c_str(), &db);
             return isDbError;
         }
 
@@ -165,7 +187,7 @@ class Database {
             if (isDbError) return 0;
 
 
-            sql = "CREATE TABLE IF NOT EXISTS Orders(orderID int,productID int,customerName varchar(256),customerContact int,customerAddress varchar(256),price int);";
+            sql = "CREATE TABLE IF NOT EXISTS Orders(orderID int,productID int,customerName varchar(256),customerContact int,customerAddress varchar(256),price int, paymentMode varchar(256));";
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
 
             if (isDbError) return 0;
@@ -251,8 +273,9 @@ class Database {
             std::string contact = detail.customerContact;
             std::string address = detail.customerAddress;
             std::string price = detail.price;
+            std::string paymentMode = detail.paymentMode;
 
-            sql = "INSERT INTO Orders VALUES('" + id + "','" + product + "','" + name + "','" + contact + "','" + address + "','" + price + "');";
+            sql = "INSERT INTO Orders VALUES('" + id + "','" + product + "','" + name + "','" + contact + "','" + address + "','" + price + "','" + paymentMode + "')";
             isDbError = sqlite3_exec(db, sql.c_str(), defaultCallback, 0, &zErrMsg);
 
         }
@@ -342,6 +365,25 @@ class Database {
         }
         /*----------------INVENTORY METHODS END--------------------*/
 
+        /*----------------REVISION METHODS START--------------------*/
+
+        OrderDetails* getAllOrders() {
+            OrderDetails* toReturn;
+            sql = "SELECT * FROM Orders;";
+            isDbError = sqlite3_exec(db, sql.c_str(), allOrdersCallback, 0, &zErrMsg);
+            toReturn = listOfOrders;
+            return toReturn;
+        }
+
+        int numberOfOrder() {
+            int temp = orderCounter;
+            orderCounter = 0;
+            return temp;
+        }
+
+        /*----------------REVISION METHODS END--------------------*/
+
+
         /*----------------DISCOUNT METHODS START--------------------*/
         DiscountDetails* getDiscountCodes() {
             DiscountDetails* toReturn;
@@ -385,6 +427,4 @@ class Database {
         void close(){
             sqlite3_close(db);
         }
-
-
 };

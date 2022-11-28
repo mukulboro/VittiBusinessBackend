@@ -58,6 +58,7 @@ typedef struct OrderStuff {
 	std::string customerContact;
 	std::string customerAddress;
 	std::string price;
+	std::string paymentMode;
 } OrderDetails;
 
 typedef struct AgendaStuff {

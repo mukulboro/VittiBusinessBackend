@@ -1,9 +1,9 @@
 #include "crow_all.h"
 #include "../WebServer/WebServer/database.h"
+#include <winhttp.h>
 #include "../WebServer/WebServer/customDataTypes.h"
 #include "sqlite3.h"
 #define PORT 6969
-
 
 int main()
 {
@@ -35,7 +35,7 @@ int main()
 
     CROW_ROUTE(app, "/health").methods("GET"_method)
         ([]() {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         CROW_LOG_INFO << ":::Server health checked:::";
         return "true";
     });
@@ -44,7 +44,7 @@ int main()
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
     ([&database](const crow::request& req){
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string userName, password;
@@ -77,7 +77,7 @@ int main()
 
     CROW_ROUTE(app, "/product/<int>").methods("GET"_method)
      ([&database](const crow::request& req, int productID) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         ProductDetails detail = database.getProductDetail(productID);
@@ -96,7 +96,7 @@ int main()
         // GET order details
     CROW_ROUTE(app, "/orders/<int>").methods("GET"_method)
         ([&database](const crow::request& req, int orderID) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         OrderDetails detail = database.getOrderDetail(orderID);
@@ -107,6 +107,7 @@ int main()
         response["customerContact"] = detail.customerContact;
         response["customerAddress"] = detail.customerAddress;
         response["price"] = detail.price;
+        response["paymentMode"] = detail.paymentMode;
 
         return response;
      });
@@ -124,12 +125,14 @@ int main()
         std::string customerContact = requestBody["contact"].s();
         std::string customerAddress = requestBody["address"].s();
         std::string price = requestBody["price"].s();
+        std::string modeOfPayment = requestBody["paymentMode"].s();
         toSend.orderID = std::to_string(time(0));
         toSend.productID = productID;
         toSend.customerName = customerName;
         toSend.customerAddress = customerAddress;
         toSend.customerContact = customerContact;
         toSend.price = price;
+        toSend.paymentMode = modeOfPayment;
         database.addOrder(toSend);
         response["orderID"] = toSend.orderID;
         response["message"] = "Added Order";
@@ -140,7 +143,7 @@ int main()
     //REMOVE Orders (delete)
     CROW_ROUTE(app, "/orders/<int>").methods("DELETE"_method)
         ([&database](const crow::request& req, int orderID) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         database.deleteOrder(orderID);
@@ -155,7 +158,7 @@ int main()
         // GET Inventory
     CROW_ROUTE(app, "/inventory/<int>").methods("GET"_method)
         ([&](const crow::request& req, int inventoryID) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
 
@@ -165,7 +168,6 @@ int main()
             int numberOfValues;
             listOfValues = database.getInventory();
             numberOfValues = database.numberOfInventory();
-
            
             for (int i = 0; i < numberOfValues; i++) {
                 response["productID"] = listOfValues[i].productID;
@@ -210,7 +212,7 @@ int main()
     // DETELE Inventory
     CROW_ROUTE(app, "/inventory/<int>").methods("DELETE"_method)
         ([&database](const crow::request& req, int inventoryID) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         database.deleteInventory(inventoryID);
@@ -222,7 +224,7 @@ int main()
         // GET Discount 
     CROW_ROUTE(app, "/discount").methods("GET"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::vector<crow::json::wvalue> list;
@@ -248,7 +250,7 @@ int main()
 
     CROW_ROUTE(app, "/sales").methods("GET"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         int totalSales = database.getAllSales();
@@ -263,7 +265,7 @@ int main()
         // GET Agenda
     CROW_ROUTE(app, "/agenda").methods("GET"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::vector<crow::json::wvalue> list;
@@ -285,7 +287,7 @@ int main()
     // POST agenda
     CROW_ROUTE(app, "/agenda").methods("POST"_method)
         ([&database](const crow::request& req) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
 
         std::string agenda;
         auto requestBody = crow::json::load(req.body);
@@ -301,7 +303,7 @@ int main()
         // GET attendance details
     CROW_ROUTE(app, "/attendance/<int>").methods("GET"_method)
         ([&](const crow::request& req, int employeeID) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response;
         std::vector<crow::json::wvalue> list;
@@ -326,7 +328,7 @@ int main()
 
     CROW_ROUTE(app, "/add/inventory").methods("POST"_method)
         ([&database](const crow::request& req) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string maxPrice = requestBody["maxPrice"].s();
@@ -343,7 +345,7 @@ int main()
 
     CROW_ROUTE(app, "/add/employee").methods("POST"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string name = requestBody["name"].s();
@@ -362,7 +364,7 @@ int main()
 
     CROW_ROUTE(app, "/add/discount").methods("POST"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string code = requestBody["code"].s();
@@ -377,7 +379,7 @@ int main()
 
     CROW_ROUTE(app, "/remove/employee").methods("DELETE"_method)
         ([&database](const crow::request& req) {
-        //ROUTE COMPLETED
+        //ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string employeeID = requestBody["employeeID"].s();
@@ -388,7 +390,7 @@ int main()
 
     CROW_ROUTE(app, "/remove/discount").methods("DELETE"_method)
         ([&database](const crow::request& req) {
-        // ROUTE COMPLETED
+        // ROUTE COMPLETED:: ADDED TO SERVER DRIVER
         auto requestBody = crow::json::load(req.body);
         crow::json::wvalue response({});
         std::string code = requestBody["code"].s();
@@ -397,7 +399,33 @@ int main()
         return response;
             });
 
-    
+    // Revision Routes
+    CROW_ROUTE(app, "/allorders").methods("GET"_method)
+        ([&database](const crow::request& req) {
+        crow::json::wvalue response({});
+        std::vector<crow::json::wvalue> list;
+        OrderDetails* listOfValues;
+        int numberOfValues;
+        listOfValues = database.getAllOrders();
+        numberOfValues = database.numberOfOrder();
+
+        for (int i = 0; i < numberOfValues; i++) {
+            response["orderID"] = listOfValues[i].orderID;
+            response["productID"] = listOfValues[i].productID;
+            response["customerName"] = listOfValues[i].customerName;
+            response["customerContact"] = listOfValues[i].customerContact;
+            response["customerAddress"] = listOfValues[i].customerAddress;
+            response["price"] = listOfValues[i].price;
+            response["paymentMethod"] = listOfValues[i].paymentMode;
+            list.push_back(response);
+        }
+
+        crow::json::wvalue listResponse(crow::json::wvalue::list({ list }));
+        return listResponse;
+            
+            });
+
+        
     app.port(PORT)
       .server_name("VittiWebServer")
       .multithreaded()
